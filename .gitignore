@@ -6,3 +6,4 @@ bak[0-9]/
 *.bin
 *.exe
 *.pprof
+.~lock.*

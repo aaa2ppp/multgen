@@ -1,0 +1,8 @@
+bin/
+tmp/
+bak/
+bak[0-9]/
+*.out
+*.bin
+*.exe
+*.pprof

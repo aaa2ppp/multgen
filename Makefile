@@ -4,9 +4,9 @@ BIN_DIR := bin
 TMP_DIR := tmp
 GOEXE := $(shell go env GOEXE)
 
-MERGE_FILES ?= Makefile *.go *.sh *.md
+MERGE_FILES ?= Makefile go.mod go.sum *.go *.sh *.md
 
-# for merging code and maybe for something else...
+# source and destination for merge/patch operations
 SRC ?= .
 DST ?= 1
 

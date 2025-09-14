@@ -1,5 +1,9 @@
 // == internal/solver/solver.go ==
 
+// Package solver provides multiplier generation algorithms.
+//
+// NOTE: Current implementation is a stub. Real algorithm development
+// is postponed until requirements clarification from README_QUESTIONS.md
 package solver
 
 import "multgen/internal/config"

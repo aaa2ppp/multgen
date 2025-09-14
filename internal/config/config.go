@@ -15,12 +15,12 @@ const (
 	defaultMaxMultiplier = 10000.0
 	defaultMinSeqValue   = 1.0
 	defaultMaxSeqValue   = 10000.0
-	defautlServerAddr    = "localhost:64333"
+	defaultServerAddr    = "localhost:64333"
 )
 
 var (
 	// Solver
-	rtp           = flag.Float64("rtp", 0, fmt.Sprintf("rtp must be in (%f ... %f] (required)", minRTP, maxRTP))
+	rtp           = flag.Float64("rtp", 0, fmt.Sprintf("rtp must be in (%0.1f, %0.1f] (required)", minRTP, maxRTP))
 	anyRTP        = flag.Bool("anyrtp", false, "disable the rtp check")
 	minMultiplier = flag.Float64("minmult", defaultMinMultiplier, "min multiplier")
 	maxMultiplier = flag.Float64("maxmult", defaultMaxMultiplier, "max multiplier")
@@ -29,7 +29,7 @@ var (
 	algorithm     = flag.String("algo", "", "algorithm for generating multipliers")
 
 	// Server
-	serverAddr = flag.String("http", defautlServerAddr, "http server addr")
+	serverAddr = flag.String("http", defaultServerAddr, "http server addr")
 	cliMode    = flag.Bool("cli", false, "cli mode: http server does not start; read one int N (sequence length) from stdin; write N multipliers to stdout")
 )
 

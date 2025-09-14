@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"multgen/internal/api"
@@ -51,7 +52,7 @@ func runAsHTTPServer(cfg *config.Server, solver Solver) int {
 		defer close(done)
 
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		s := <-c
 
 		log.Printf("shutdown by signal: %v", s)
@@ -59,7 +60,7 @@ func runAsHTTPServer(cfg *config.Server, solver Solver) int {
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("correct shutdown failed: %v", err)
+			log.Printf("graceful shutdown failed: %v", err)
 			done <- 1
 		}
 	}()
@@ -85,7 +86,7 @@ func runAsCLI(in io.Reader, out io.Writer, solver Solver) int {
 	for i := 0; i < n; i++ {
 		multiplier := solver.Solve()
 		// skip the write error check for performance; check it on flush
-		w.WriteString(strconv.FormatFloat(multiplier, 'f', 3, 64))
+		w.WriteString(strconv.FormatFloat(multiplier, 'g', -1, 64))
 		w.WriteByte('\n')
 	}
 

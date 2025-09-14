@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Solver interface {
@@ -36,10 +37,11 @@ type getResponse struct {
 func getHandler(s Solver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		multiplier := s.Solve()
+		buf, _ := json.Marshal(getResponse{Result: multiplier}) // can't fail for struct literal
 
 		w.Header().Set("content-type", "application/json")
+		w.Header().Set("content-length", strconv.Itoa(len(buf)))
 
-		buf, _ := json.Marshal(getResponse{Result: multiplier}) // can't fail for struct literal
 		if _, err := w.Write(buf); err != nil {
 			logWriteError(r, err)
 		}

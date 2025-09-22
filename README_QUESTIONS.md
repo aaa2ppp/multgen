@@ -24,3 +24,5 @@
 ## Анализ примера:
 - [samples.ods](./docs/questions/samples.ods)
 - [samples.pdf](./docs/questions/samples.pdf)
+
+

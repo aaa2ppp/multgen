@@ -3,7 +3,6 @@
 package api
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -30,14 +29,15 @@ func pong(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type getResponse struct {
-	Result float64 `json:"result"`
-}
-
 func getHandler(s Solver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		multiplier := s.Solve()
-		buf, _ := json.Marshal(getResponse{Result: multiplier}) // can't fail for struct literal
+
+		// The response is simple, so we may not use json package. It is for performance reasons.
+		buf := make([]byte, 0, 64)
+		buf = append(buf, `{"result":`...)
+		buf = strconv.AppendFloat(buf, multiplier, 'g', -1, 64)
+		buf = append(buf, '}')
 
 		w.Header().Set("content-type", "application/json")
 		w.Header().Set("content-length", strconv.Itoa(len(buf)))

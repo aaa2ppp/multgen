@@ -1,4 +1,4 @@
-// == internal/cmd/multgen/main.go ==
+// == internal/cmd/multgen/multgen.go ==
 
 package multgen
 
@@ -15,16 +15,18 @@ import (
 	"syscall"
 	"time"
 
-	"multgen/internal/api"
-	"multgen/internal/config"
-	"multgen/internal/solver"
+	"github.com/aaa2ppp/multgen/internal/api"
+	"github.com/aaa2ppp/multgen/internal/config"
+	"github.com/aaa2ppp/multgen/internal/solver"
 )
 
-type Solver = solver.Solver
+func Main(tune config.Config) {
+	cfg := config.MustLoad(tune)
 
-func Main() {
-	cfg := config.MustLoad()
-	solver := solver.New(cfg.Solver)
+	solver, err := solver.New(cfg.Solver)
+	if err != nil {
+		log.Fatalf("can't create solver: %v", err)
+	}
 
 	var exitCode int
 	if cfg.Server.Enable {
@@ -37,8 +39,8 @@ func Main() {
 	os.Exit(exitCode)
 }
 
-func runAsHTTPServer(cfg *config.Server, solver Solver) int {
-	api := api.New(solver)
+func runAsHTTPServer(cfg config.Server, s *solver.Solver) int {
+	api := api.New(s)
 
 	server := &http.Server{
 		Addr:         cfg.Addr,
@@ -74,7 +76,7 @@ func runAsHTTPServer(cfg *config.Server, solver Solver) int {
 	return <-done
 }
 
-func runAsCLI(in io.Reader, out io.Writer, solver Solver) int {
+func runAsCLI(in io.Reader, out io.Writer, s *solver.Solver) int {
 	var n int
 	if _, err := fmt.Fscan(in, &n); err != nil {
 		log.Printf("can't read n: %v", err)
@@ -84,10 +86,11 @@ func runAsCLI(in io.Reader, out io.Writer, solver Solver) int {
 	w := bufio.NewWriter(out)
 
 	for i := 0; i < n; i++ {
-		multiplier := solver.Solve()
-		// skip the write error check for performance; check it on flush
-		w.WriteString(strconv.FormatFloat(multiplier, 'g', -1, 64))
-		w.WriteByte('\n')
+		multiplier := s.Solve()
+		b := w.AvailableBuffer()
+		b = strconv.AppendFloat(b, multiplier, 'g', -1, 64)
+		b = append(b, '\n')
+		w.Write(b) // skip the write error check for performance; check it on flush
 	}
 
 	if err := w.Flush(); err != nil {

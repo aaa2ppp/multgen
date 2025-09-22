@@ -3,9 +3,25 @@
 package main
 
 import (
-	"multgen/internal/cmd/multgen"
+	"github.com/aaa2ppp/multgen/internal/cmd/multgen"
+	"github.com/aaa2ppp/multgen/internal/config"
+	"github.com/aaa2ppp/multgen/internal/solver"
 )
 
+// tune application
+var tune = config.Config{
+	Server: config.Server{
+		Addr:   "localhost:64333",
+		Enable: true,
+	},
+	Solver: config.Solver{
+		Algorithm:     "v1",
+		MinMultiplier: solver.MinMultiplier,
+		MaxMultiplier: solver.MaxMultiplier,
+		K:             15,
+	},
+}
+
 func main() {
-	multgen.Main()
+	multgen.Main(tune)
 }

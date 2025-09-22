@@ -26,7 +26,7 @@ FORCE:
 
 
 # Основная цель - собирает все бинарники
-all: deps $(BINARIES)
+all: deps build
 
 # Правило для подготовки зависимостей
 deps:
@@ -37,6 +37,8 @@ $(BIN_DIR)/%: FORCE
 	@mkdir -p $(@D)
 	go build $(GO_BUILD_FLAGS) -o $@$(GOEXE) ./cmd/$(notdir $@)
 
+build: $(BINARIES)
+
 # Очистка
 clean:
 	-rm -rf $(BIN_DIR) $(TMP_DIR)
@@ -45,7 +47,7 @@ clean:
 MERGE_FIND_PARTS := $(patsubst %,-o -name '%',$(MERGE_FILES))
 MERGE_FIND_EXPR := $(wordlist 2,$(words $(MERGE_FIND_PARTS)),$(MERGE_FIND_PARTS))
 
-merge-code:
+merge:
 	@mkdir -p $(TMP_DIR)
 	find $(SRC) -type f \( $(MERGE_FIND_EXPR) \) -exec cat {} + > $(TMP_DIR)/$(DST).code
 	

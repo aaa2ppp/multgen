@@ -34,7 +34,7 @@ func getHandler(s Solver) http.HandlerFunc {
 		multiplier := s.Solve()
 
 		// The response is simple, so we may not use json package. It is for performance reasons.
-		buf := make([]byte, 0, 64)
+		buf := bufPool.Get()
 		buf = append(buf, `{"result":`...)
 		buf = strconv.AppendFloat(buf, multiplier, 'g', -1, 64)
 		buf = append(buf, '}')
@@ -43,7 +43,9 @@ func getHandler(s Solver) http.HandlerFunc {
 		w.Header().Set("content-length", strconv.Itoa(len(buf)))
 
 		if _, err := w.Write(buf); err != nil {
+			bufPool.Put(buf)
 			logWriteError(r, err)
 		}
+		bufPool.Put(buf)
 	}
 }

@@ -44,6 +44,10 @@ clean:
 	-rm -rf $(BIN_DIR) $(TMP_DIR)
 
 
+bench:
+	go test -bench . -benchmem ./internal/cmd/multgen/.
+
+
 MERGE_FIND_PARTS := $(patsubst %,-o -name '%',$(MERGE_FILES))
 MERGE_FIND_EXPR := $(wordlist 2,$(words $(MERGE_FIND_PARTS)),$(MERGE_FIND_PARTS))
 

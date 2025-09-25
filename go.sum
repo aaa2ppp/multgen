@@ -1,2 +1,4 @@
 github.com/aaa2ppp/be v0.0.0-20250921233015-47a341af14ef h1:C3i0hhXHa9iPFzW3aV6QkVvmPxPd0uXw1oz6+y80HBg=
 github.com/aaa2ppp/be v0.0.0-20250921233015-47a341af14ef/go.mod h1:JuLDLUfFCpiCnmv2AIpNP/fGgyKpYV5heJxwVB2vZII=
+gonum.org/v1/gonum v0.16.0 h1:5+ul4Swaf3ESvrOnidPp4GZbzf0mxVQpDCYUQE7OJfk=
+gonum.org/v1/gonum v0.16.0/go.mod h1:fef3am4MQ93R2HHpKnLk4/Tbh/s0+wqD5nfa6Pnwy4E=

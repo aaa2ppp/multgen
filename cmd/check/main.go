@@ -72,6 +72,11 @@ func main() {
 		totalProfit  float64
 	}
 
+	if *minX == *maxX {
+		*playersNum = 1
+	}
+
+	log.Printf("players=%d", *playersNum)
 	players := make([]player, *playersNum)
 
 	var (
@@ -131,7 +136,7 @@ func main() {
 		rtp := totalProfit / totalPayment
 
 		if *verbose {
-			log.Printf("count=%d elapsed=%v payment=%0.3f profit=%0.3f max_multiplier=%0.3f",
+			log.Printf("count=%d elapsed=%v payment=%0.3f profit=%0.3f max_multiplier=%g",
 				count, time.Since(start), totalPayment, totalProfit, maxMultiplier)
 		}
 
@@ -146,7 +151,7 @@ func main() {
 	}
 
 	if *verbose {
-		log.Printf("count=%d elapsed=%v max_multiplier=%0.3f",
+		log.Printf("count=%d elapsed=%v max_multiplier=%g",
 			count, time.Since(start), maxMultiplier)
 	}
 
@@ -158,14 +163,18 @@ func main() {
 		fmt.Printf("%g %g %g %g\n", rtp, rtpLo, rtpHi, cl)
 
 		if *verbose {
-			p := 0.1
-			n := 1
-			for p > (rtpHi-rtpLo)/2 {
-				p /= 10
-				n++
+			p := 0.0001
+			d := max((rtpHi-rtpLo)/2, p)
+			n := 4
+			for p*10 <= d {
+				p *= 10
+				n--
+			}
+			if n < 0 {
+				n = 0
 			}
 			format := fmt.Sprintf("%%0.%df ±%%0.%df %%g%%%%", n, n)
-			log.Printf(format, math.Round(rtp/p)*p, math.Round((rtpHi-rtpLo)/2/p)*p, cl*100)
+			log.Printf(format, math.Round(rtp/p)*p, math.Round(d/p)*p, cl*100)
 		}
 	}
 }

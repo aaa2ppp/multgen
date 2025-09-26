@@ -15,7 +15,7 @@ type Solver interface {
 func New(s Solver) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("GET /get", getHandler(s))
-	mux.Handle("/ping", http.HandlerFunc(pong))
+	mux.Handle("GET /ping", http.HandlerFunc(noCache(pong)))
 	return mux
 }
 

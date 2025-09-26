@@ -40,6 +40,5 @@ type (
 	SolverConfig = config.Solver
 )
 
-func Main(tune Config) {
-	multgen.Main(tune)
-}
+func Main(tune Config)                  { multgen.Main(tune) }
+func DefaultSolverConfig() SolverConfig { return solver.DefaultConfig() }

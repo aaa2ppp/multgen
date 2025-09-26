@@ -57,15 +57,7 @@ func BenchmarkHTTPServer(b *testing.B) {
 }
 
 func startHTTPServer(b *testing.B) (url string, close func()) {
-	var stubSolverCfg = solver.Config{
-		RTP:           0.5,
-		Algorithm:     "stub",
-		MinMultiplier: solver.MinMultiplier,
-		MaxMultiplier: solver.MaxMultiplier,
-		K:             1,
-	}
-
-	s, err := solver.New(stubSolverCfg)
+	s, err := solver.New(solver.DefaultConfig())
 	be.Err(b, err, nil)
 
 	// Запускаем реальный HTTP-сервер

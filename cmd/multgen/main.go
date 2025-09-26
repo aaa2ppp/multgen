@@ -14,12 +14,7 @@ var tune = config.Config{
 		Addr:   "localhost:64333",
 		Enable: true,
 	},
-	Solver: config.Solver{
-		Algorithm:     "v1",
-		MinMultiplier: solver.MinMultiplier,
-		MaxMultiplier: solver.MaxMultiplier,
-		K:             15,
-	},
+	Solver: solver.DefaultConfig(),
 }
 
 func main() {

@@ -1,7 +1,7 @@
 # == Makefile ==
 
 BIN_DIR := bin
-TMP_DIR := tmp
+TMP_DIR := ./tmp
 GOEXE := $(shell go env GOEXE)
 TEST_FLAGS ?=
 
@@ -67,21 +67,21 @@ merge:
 # Создает прекоммит патч
 patch: test
 	@mkdir -p $(TMP_DIR)
-
-	@staged_list=$$(mktemp -p $(TMP_DIR)); \
-	unstaged_list=$$(mktemp -p $(TMP_DIR)); \
-	git diff --staged --name-only -- $(SRC) > $$staged_list; \
-	git diff --name-only -- $(SRC) > $$unstaged_list; \
-	intersection=$$(grep -Fxf $$staged_list $$unstaged_list); \
-	rm -f $$staged_list $$unstaged_list; \
+	
+	@(set -e; \
+	staged_list="$(TMP_DIR)/staged_list.$$$$"; \
+	unstaged_list="$(TMP_DIR)/unstaged_list.$$$$"; \
+	git diff --staged --name-only -- $(SRC) > "$$staged_list"; \
+	git diff --name-only -- $(SRC) > "$$unstaged_list"; \
+	intersection=$$(grep -Fxf "$$staged_list" "$$unstaged_list" || true); \
+	rm -f "$$staged_list" "$$unstaged_list"; \
 	if [ -n "$$intersection" ]; then \
 		echo "" >&2; \
 		echo "WARNING: the following files have changes not staged for commit:" >&2; \
-		echo "  (use \"git status\" to review all changes)" >&2; \
 		echo "  (use \"git add <file>...\" to update what will be committed)" >&2; \
 		printf '%s\n' $$intersection | sed 's/^/        /' >&2; \
 		echo "" >&2; \
-	fi
-
+	fi)
+	
 	git diff --staged -- $(SRC) > $(TMP_DIR)/$(DST).patch
 	@echo "Patch saved to $(TMP_DIR)/$(DST).patch"

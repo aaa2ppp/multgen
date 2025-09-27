@@ -17,154 +17,130 @@ import (
 )
 
 const (
-	MinRTP        = 0.0
-	MaxRTP        = 1.0
-	MinMultiplier = 1.0
-	MaxMultiplier = 10000.0
-	Delta         = 1e-9
+	MaxValue = 10000.0
 )
 
 type Config struct {
-	RTP        float64
-	NoCheckRTP bool // for test only - disables rtp validation
-	Algorithm  string
-
-	// algorithms tunings
-
-	MinMultiplier float64 // currently not used anywhere
-	MaxMultiplier float64 // used by algorithm v3
-	K             float64 // used by algorithm v3 only
+	RTP            float64 // required
+	InputRTP       float64 //
+	IgnoreInputRTP bool    // for test only
+	Algorithm      string  //
+	Alpha          float64 //
+	AddDelta       bool    // добавить дельту к заначению мультипликатора
 }
 
 func (c Config) Validate() error {
 	var errs []error
 
-	if !c.NoCheckRTP && !(MinRTP < c.RTP && c.RTP <= MaxRTP) {
-		errs = append(errs, fmt.Errorf("rtp value is incorrect: must be in (%g, %g], got %g", MinRTP, MaxRTP, c.RTP))
+	if !(0 < c.RTP && c.RTP <= 1.0) {
+		errs = append(errs, fmt.Errorf("rtp value is incorrect: must be in (0, 1], got %g", c.RTP))
 	}
 
-	if !(MinMultiplier <= c.MinMultiplier && c.MinMultiplier <= MaxMultiplier) {
-		errs = append(errs, fmt.Errorf("min multiplier value is incorrect: must be in [%g, %g], got %g", MinMultiplier, MaxMultiplier, c.MinMultiplier))
-	}
-
-	if !(MinMultiplier <= c.MaxMultiplier && c.MaxMultiplier <= MaxMultiplier) {
-		errs = append(errs, fmt.Errorf("max multiplier value is incorrect: must be in [%g, %g], got %g", MinMultiplier, MaxMultiplier, c.MaxMultiplier))
-	}
-
-	if !(c.MinMultiplier <= c.MaxMultiplier) {
-		errs = append(errs, fmt.Errorf("min multiplier value must be <= max multiplier value, got %g and %g", c.MinMultiplier, c.MaxMultiplier))
-	}
-
-	// TODO: remove or uncomment. I still don't know how harsh I am (now New has a fallback to stub)
-	// algoNotFound := true
-	// for _, possible := range Algorithms {
-	// 	if strings.EqualFold(possible.Name, c.Algorithm) {
-	// 		algoNotFound = false
-	// 		break
-	// 	}
-	// }
-	// if algoNotFound {
-	// 	errs = append(errs, fmt.Errorf("unknown algorithm: %s", c.Algorithm))
-	// }
-
-	if c.K <= 0 {
-		errs = append(errs, fmt.Errorf("k value is incorrect: must be > 0, got %g", c.K))
+	if !(c.Alpha >= 1) {
+		errs = append(errs, fmt.Errorf("alpha must be >= 1, got %g", c.Alpha))
 	}
 
 	return errors.Join(errs...)
 }
 
-type solveFunc func(*Config) float64
+type algoFunc func(*Config) float64
 
 type Algorithm struct {
 	Name        string
 	Description string
-	solve       solveFunc
+	fn          algoFunc
 }
 
-var note = fmt.Sprintf("\nNOTE: ANY algorithm is powerless against a sequence consisting only of values equal to %g."+
-	"\n  In this case, the RTP is ALWAYS 0, regardless of the multiplier", MaxMultiplier)
+func pareto1() float64 {
+	u := rand.Float64()
+	m := 1 / (1 - u)
+	if m > MaxValue {
+		m = MaxValue
+	}
+	return m
+}
 
+func paretoAlpha(alpha float64) float64 {
+	u := rand.Float64()
+	m := math.Pow(1-u, -1/alpha)
+	if m > MaxValue {
+		m = MaxValue
+	}
+	return m
+}
+
+// Algorithms выбора мультипликатора
 var Algorithms = []Algorithm{
-	{"v1", fmt.Sprintf("with probability=rtp returns %g, otherwise %g.", MaxMultiplier, MinMultiplier) +
-		"\nEnsures convergence for sequence length > 10000 for the transform=x case for an arbitrary sequence." +
-		note,
-		func(cfg *Config) float64 {
-			if p := rand.Float64(); p < cfg.RTP {
-				return MaxMultiplier
-			}
-			return MinMultiplier
-		},
+	{
+		"pareto1",
+		"честный (при любых x, матожидание RTP=1), но плохо сходится при больших x",
+		func(_ *Config) float64 { return pareto1() },
 	},
-	{"v2", fmt.Sprintf("with probability=rtp returns %g, otherwise %g.", MinMultiplier+Delta, MinMultiplier) +
-		"\nEnsures convergence on sequence length > 10000 for the transform=x and transform=x*m case" +
-		"\nassuming the client is rational",
-		func(cfg *Config) float64 {
-			if p := rand.Float64(); p < cfg.RTP {
-				return 1 + Delta
-			}
-			return 1
-		},
+	{
+		"paretoA",
+		`"загоняем" игрока в x=1 (RTP падает с ростом x, при alpha > 1)`,
+		func(cfg *Config) float64 { return paretoAlpha(cfg.Alpha) },
 	},
-	{"v3", fmt.Sprintf("with probability=rtp/m returns m (computed multiplier), otherwise %g."+
-		"\nThe probability that the multiplier will be set to the determined value is defined by exp(-k*x).", MinMultiplier) +
-		"\nEnsures convergence on sequence length > 1e8 for the case transform=x*m assuming the client is rational." +
-		"\nProvides a random distribution of the multiplier across the entire acceptable range." +
-		fmt.Sprintf("\nNOTE: Distribution starts at %g; max multiplier value is may be used to cap tail", MinMultiplier),
-		func(cfg *Config) float64 {
-			x := rand.Float64()
-			d := cfg.MaxMultiplier - MinMultiplier
-			m := MinMultiplier + math.Exp(-cfg.K*x)*d
-
-			prob := cfg.RTP / m
-			if prob > 1.0 {
-				prob = 1.0
-			}
-
-			if p := rand.Float64(); p < prob {
-				return m
-			}
-			return MinMultiplier
-		},
+	{
+		"max",
+		fmt.Sprintf("всегда возвращает %g", MaxValue),
+		func(_ *Config) float64 { return MaxValue },
 	},
-	{"stub", fmt.Sprintf("always returns strictly %g", MinMultiplier),
-		func(cfg *Config) float64 { return MinMultiplier },
+	{
+		"min",
+		"всегда возвращает 1",
+		func(_ *Config) float64 { return 1 },
 	},
 }
 
 type Solver struct {
-	cfg   Config
-	solve solveFunc
-}
-
-func (s *Solver) Solve() float64 {
-	return s.solve(&s.cfg)
+	cfg    Config
+	algoFn algoFunc
 }
 
 func New(cfg Config) (*Solver, error) {
+	if !cfg.IgnoreInputRTP {
+		cfg.RTP = cfg.InputRTP
+	}
+
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
-	var solve solveFunc
-	for _, a := range Algorithms {
-		if strings.EqualFold(a.Name, cfg.Algorithm) {
-			solve = a.solve
+	var algoFn algoFunc
+	for _, algo := range Algorithms {
+		if strings.EqualFold(algo.Name, cfg.Algorithm) {
+			algoFn = algo.fn
 			break
 		}
 	}
 
-	// fallback to stub
-	if solve == nil {
-		n := len(Algorithms)
-		a := Algorithms[n-1]
+	if algoFn == nil {
+		a := defaultAlgorithm()
 		log.Printf("instead of the unknown %q algorithm, %q algorithm will be used", cfg.Algorithm, a.Name)
 		cfg.Algorithm = a.Name
-		solve = a.solve
+		algoFn = a.fn
 	}
 
 	return &Solver{
-		cfg:   cfg,
-		solve: solve,
+		cfg:    cfg,
+		algoFn: algoFn,
 	}, nil
+}
+
+func (s *Solver) Solve() float64 {
+
+	// забираем свою долю
+	p := rand.Float64()
+	if p > s.cfg.RTP {
+		return 1
+	}
+
+	multiplier := s.algoFn(&s.cfg)
+
+	if s.cfg.AddDelta {
+		multiplier = math.Nextafter(multiplier, multiplier+1)
+	}
+
+	return multiplier
 }

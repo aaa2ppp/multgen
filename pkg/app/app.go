@@ -27,13 +27,6 @@ import (
 	"github.com/aaa2ppp/multgen/internal/solver"
 )
 
-const (
-	MinRTP        = solver.MinRTP
-	MaxRTP        = solver.MaxRTP
-	MinMultiplier = solver.MinMultiplier
-	MaxMultiplier = solver.MaxMultiplier
-)
-
 type (
 	Config       = config.Config
 	ServerConfig = config.Server

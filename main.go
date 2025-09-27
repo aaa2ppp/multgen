@@ -15,6 +15,7 @@ func main() {
 	solver := app.DefaultSolverConfig()
 
 	// TODO: Don't forget to configure solver!
+	solver.Algorithm = "pareto1"
 
 	app.Main(app.Config{
 		Server: app.ServerConfig{

@@ -22,6 +22,7 @@ import (
 
 func Main(tune config.Config) {
 	cfg := config.MustLoad(tune)
+	log.Printf("cfg: %+v", cfg)
 
 	solver, err := solver.New(cfg.Solver)
 	if err != nil {

@@ -30,22 +30,21 @@ func algorithmsHelp(msg string, algos []s.Algorithm) string {
 	buf.WriteString(":\n")
 	for _, a := range algos {
 		buf.WriteString(strconv.Quote(a.Name))
-		buf.WriteString(" - ")
+		if len(a.Name) < 6 {
+			buf.WriteString("\t- ")
+		} else {
+			buf.WriteString(" - ")
+		}
 		buf.WriteString(strings.ReplaceAll(a.Description, "\n", "\n    "))
 		buf.WriteString(";\n")
 	}
 	return buf.String()
 }
 
-func required[T comparable](v T) string {
-	var zero T
-	if v == zero {
-		return " (required)"
-	}
-	return ""
-}
-
 func MustLoad(tune Config) Config {
+	server := &tune.Server
+	solver := &tune.Solver
+
 	var (
 		help = flag.Bool("help", false, "show usage help")
 
@@ -59,12 +58,10 @@ func MustLoad(tune Config) Config {
 
 		// Solver flags
 
-		rtp           = flag.Float64("rtp", tune.Solver.RTP, fmt.Sprintf("rtp must be in (%g, %g]%s", s.MinRTP, s.MaxRTP, required(tune.Solver.RTP)))
-		noCheckRTP    = flag.Bool("no-check-rtp", tune.Solver.NoCheckRTP, "disables rtp validation (for testing only)")
-		minMultiplier = flag.Float64("min", tune.Solver.MinMultiplier, fmt.Sprintf("tune min multiplier value. must be in [%g, %g] (currently not used anywhere)", s.MinMultiplier, s.MaxMultiplier))
-		maxMultiplier = flag.Float64("max", tune.Solver.MaxMultiplier, fmt.Sprintf("tune max multiplier value. must be in [%g, %g]", s.MinMultiplier, s.MaxMultiplier))
-		algorithm     = flag.String("algo", tune.Solver.Algorithm, algorithmsHelp("algorithm for generating multipliers", s.Algorithms))
-		k             = flag.Float64("k", tune.Solver.K, "k in the exp(-k*x), if applicable; must be > 0")
+		rtp       = flag.Float64("rtp", 0, "rtp must be in (0, 1] (required)")
+		algorithm = flag.String("algo", solver.Algorithm, algorithmsHelp("algorithm for generating multipliers", s.Algorithms))
+		alpha     = flag.Float64("alpha", solver.Alpha, "alpha must be >= 1")
+		addDelta  = flag.Bool("d", solver.AddDelta, "add delta to mulipliers")
 	)
 
 	flag.Parse()
@@ -75,26 +72,18 @@ func MustLoad(tune Config) Config {
 		os.Exit(0)
 	}
 
-	solverCfg := Solver{
-		RTP:           *rtp,
-		NoCheckRTP:    *noCheckRTP,
-		Algorithm:     *algorithm,
-		MinMultiplier: *minMultiplier,
-		MaxMultiplier: *maxMultiplier,
-		K:             *k,
-	}
-
-	if err := solverCfg.Validate(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		flag.PrintDefaults()
+	if *rtp == 0 {
+		fmt.Fprintln(os.Stderr, "rtp is required")
 		os.Exit(1)
 	}
 
-	return Config{
-		Solver: solverCfg,
-		Server: Server{
-			Addr:   *serverAddr,
-			Enable: !*cliMode,
-		},
-	}
+	server.Addr = *serverAddr
+	server.Enable = !*cliMode
+
+	solver.InputRTP = *rtp
+	solver.Algorithm = *algorithm
+	solver.Alpha = *alpha
+	solver.AddDelta = *addDelta
+
+	return tune
 }

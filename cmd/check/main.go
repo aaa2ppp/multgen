@@ -20,6 +20,7 @@ var (
 	help       = flag.Bool("help", false, "show usage help")
 	minX       = flag.Float64("min", 1, "min sequence value, must be >= 1.0")
 	maxX       = flag.Float64("max", 10000, "max sequence value, must be >= 1.0")
+	one        = flag.Bool("1", false, "if this flag is set, then payment = 1")
 	multiply   = flag.Bool("m", false, "if this flag is set, then transform = x * m, otherwise x")
 	playersNum = flag.Int("n", 1, "number of playes")
 	verbose    = flag.Bool("v", false, "output human-readable results in stderr")
@@ -82,6 +83,7 @@ func main() {
 	var (
 		m             float64 // мультипликатор
 		x             float64 // значение последовательности
+		p             = 1.0   // платеж
 		t             float64 // значение после трансформации
 		d             = *maxX - *minX
 		count         int
@@ -105,6 +107,10 @@ func main() {
 				x += rand.Float64() * d
 			}
 
+			if !*one {
+				p = x
+			}
+
 			// transformate t = F(m, x)
 			if m <= x {
 				t = 0
@@ -115,7 +121,7 @@ func main() {
 			}
 
 			// count player aggregates
-			players[i].totalPayment += x
+			players[i].totalPayment += p
 			players[i].totalProfit += t
 		}
 

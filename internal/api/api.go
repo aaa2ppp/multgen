@@ -12,11 +12,11 @@ type Solver interface {
 	Solve() float64
 }
 
-func New(s Solver) *http.ServeMux {
+func New(s Solver) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("GET /get", getHandler(s))
-	mux.Handle("GET /ping", http.HandlerFunc(noCache(pong)))
-	return mux
+	mux.Handle("GET /ping", http.HandlerFunc(pong))
+	return noCache(mux)
 }
 
 func logWriteError(r *http.Request, err error) {

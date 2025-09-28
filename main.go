@@ -20,7 +20,6 @@ func main() {
 	app.Main(app.Config{
 		Server: app.ServerConfig{
 			Addr:   "localhost:64333",
-			Enable: true,
 		},
 		Solver: solver,
 	})

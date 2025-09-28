@@ -48,7 +48,7 @@ clean:
 .PHONY: bench-http test
 
 bench-http:
-	go test -bench . -benchmem ./internal/api/. ./internal/cmd/multgen/. 
+	go test -bench . -benchmem ./internal/api/... ./internal/cmd/multgen/. 
 
 test:
 	go test $(TEST_FLAGS) ./...

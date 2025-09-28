@@ -13,13 +13,14 @@ import (
 )
 
 type Config struct {
-	Server Server
-	Solver s.Config
+	CLIMode bool
+	Server  Server
+	Solver  s.Config
 }
 
 type Server struct {
-	Addr   string
-	Enable bool
+	Addr     string
+	FastHTTP bool
 }
 
 type Solver = s.Config
@@ -48,13 +49,15 @@ func MustLoad(tune Config) Config {
 	var (
 		help = flag.Bool("help", false, "show usage help")
 
-		// Server flags
-
-		serverAddr = flag.String("http", tune.Server.Addr, "http server address")
-		cliMode    = flag.Bool("cli", !tune.Server.Enable, "cli mode:"+
+		cliMode = flag.Bool("cli", tune.CLIMode, "cli mode:"+
 			"\n- http server does not start;"+
 			"\n- read one int N (sequence length) from stdin;"+
 			"\n- write N multipliers to stdout")
+
+		// Server flags
+
+		serverAddr = flag.String("http", server.Addr, "http server address")
+		fastHTTP   = flag.Bool("fast", server.FastHTTP, "use fasthttp instead of net/http")
 
 		// Solver flags
 
@@ -77,8 +80,10 @@ func MustLoad(tune Config) Config {
 		os.Exit(1)
 	}
 
+	tune.CLIMode = *cliMode
+
 	server.Addr = *serverAddr
-	server.Enable = !*cliMode
+	server.FastHTTP = *fastHTTP
 
 	solver.InputRTP = *rtp
 	solver.Algorithm = *algorithm

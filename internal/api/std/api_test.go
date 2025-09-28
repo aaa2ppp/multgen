@@ -1,4 +1,4 @@
-// == internal/api/api_test.go ==
+// == internal/api/std/api_test.go ==
 
 package api_test
 
@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/aaa2ppp/be"
-	"github.com/aaa2ppp/multgen/internal/api"
+	api "github.com/aaa2ppp/multgen/internal/api/std"
 	"github.com/aaa2ppp/multgen/internal/solver"
 	"github.com/aaa2ppp/multgen/internal/testutils"
 )
@@ -31,7 +31,7 @@ func Test_GetHandler(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	// Проверки
-	be.Equal(t, w.Code, http.StatusOK)
+	be.Equal(be.Require(t), w.Code, http.StatusOK)
 	body := w.Body.String()
 	be.Equal(t, body, `{"result":1}`)
 	be.Equal(t, w.Header().Get("content-length"), strconv.Itoa(len(body))) // len(`{"result":1}`)
@@ -52,7 +52,7 @@ func Benchmark_getHandler(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			w := httptest.NewRecorder()
 			handler.ServeHTTP(w, req)
-			be.Equal(b, http.StatusOK, w.Code)
+			// be.Equal(be.Require(b), w.Code, http.StatusOK)
 		}
 	})
 }

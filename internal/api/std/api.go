@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/aaa2ppp/multgen/internal/api/buffer"
 )
 
 type Solver interface {
@@ -34,7 +36,7 @@ func getHandler(s Solver) http.HandlerFunc {
 		multiplier := s.Solve()
 
 		// one Get
-		buf := bufPool.Get()
+		buf := buffer.Get()
 
 		// The response is simple, so we may not use json package. It is for performance reasons.
 		buf = append(buf, `{"result":`...)
@@ -49,6 +51,6 @@ func getHandler(s Solver) http.HandlerFunc {
 		}
 
 		// one Put
-		bufPool.Put(buf)
+		buffer.Put(buf)
 	}
 }

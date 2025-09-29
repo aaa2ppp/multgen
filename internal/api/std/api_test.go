@@ -1,5 +1,3 @@
-// == internal/api/std/api_test.go ==
-
 package api_test
 
 import (
@@ -10,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/aaa2ppp/be"
+
 	api "github.com/aaa2ppp/multgen/internal/api/std"
 	"github.com/aaa2ppp/multgen/internal/solver"
 	"github.com/aaa2ppp/multgen/internal/testutils"

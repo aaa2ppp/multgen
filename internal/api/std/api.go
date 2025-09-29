@@ -1,5 +1,3 @@
-// == internal/api/api.go ==
-
 package api
 
 import (
@@ -14,11 +12,11 @@ type Solver interface {
 	Solve() float64
 }
 
-func New(s Solver) http.Handler {
+func New(s Solver) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.Handle("GET /get", getHandler(s))
-	mux.Handle("GET /ping", http.HandlerFunc(pong))
-	return noCache(mux)
+	mux.Handle("GET /get", noCache(getHandler(s)))
+	mux.Handle("GET /ping", noCache(http.HandlerFunc(pong)))
+	return mux
 }
 
 func logWriteError(r *http.Request, err error) {

@@ -1,5 +1,3 @@
-// == cmd/multgen/main.go ==
-
 package main
 
 import (

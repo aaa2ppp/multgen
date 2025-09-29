@@ -1,4 +1,3 @@
-<!-- == README.md == -->
 # Multiplier Generator Service
 
 HTTP-сервис и CLI-утилита для генерации числовых множителей на основе различных алгоритмов.  
@@ -28,7 +27,9 @@ make all
 ```bash
 bin/multgen -rtp=0.95
 ```
-<span style="font-size: 0.8em; color: #666;">**Note:** Для соответствия ТЗ доступен запуск из корня проекта: ```bash go run -- . -rtp=<значение>```</span>
+<span style="font-size: 0.8em; color: #666;">**Note:** Для соответствия ТЗ доступен запуск из корня проекта: 
+`go run -- . -rtp=<value>`
+</span>
 
 Пример запроса:
 ```bash
@@ -57,7 +58,7 @@ echo 10 | bin/multgen -rtp=0.9 -cli
 #### Пример:
 
 ```bash
-$ echo 10000 | bin/multgen -cli -algo=max -rtp=0.5 | bin/check
+echo 10000 | bin/multgen -cli -algo=max -rtp=0.5 | bin/check
 0.5090351367742486
 ```
 
@@ -83,6 +84,7 @@ $ echo 10000 | bin/multgen -cli -algo=max -rtp=0.5 | bin/check
 | `-min` | Минимальное значение в последовательности (по умолчанию 1.0) |
 | `-max` | Максимальное значение в последовательности (по умолчанию 10000.0) |
 | `-m`   | Если указан — трансформация `x * m`, иначе `x` |
+| `-1`   | Если указан — платеж `1`, иначе `x` |
 
 > Подробнее ```bin/check --help```
 

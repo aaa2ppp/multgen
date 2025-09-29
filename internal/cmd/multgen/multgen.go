@@ -1,5 +1,3 @@
-// == internal/cmd/multgen/multgen.go ==
-
 package multgen
 
 import (
@@ -17,11 +15,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/valyala/fasthttp"
+
 	fastapi "github.com/aaa2ppp/multgen/internal/api/fast"
 	api "github.com/aaa2ppp/multgen/internal/api/std"
 	"github.com/aaa2ppp/multgen/internal/config"
 	"github.com/aaa2ppp/multgen/internal/solver"
-	"github.com/valyala/fasthttp"
 )
 
 func Main(tune config.Config) {

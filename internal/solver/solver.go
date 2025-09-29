@@ -1,10 +1,4 @@
-// == internal/solver/solver.go ==
-
 // Package solver provides multiplier generation algorithms.
-//
-// NOTE: Implementation covers multiple experimental algorithms for multiplier generation,
-// as formal requirements are still pending (see README_QUESTIONS.md).
-// Algorithms are provided "as is" for different theoretical scenarios.
 package solver
 
 import (
@@ -71,7 +65,7 @@ func paretoAlpha(alpha float64) float64 {
 var Algorithms = []Algorithm{
 	{
 		"pareto1",
-		"честный (при любых x, матожидание RTP=1), но плохо сходится при больших x",
+		`"честный" (при любых x, матожидание RTP=1), но плохо сходится при больших x`,
 		func(_ *Config) float64 { return pareto1() },
 	},
 	{

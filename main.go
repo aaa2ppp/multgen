@@ -1,5 +1,3 @@
-// == main.go ==
-
 // Этот файл необходим только для запуска приложения на тестовой платформе и
 // удовлетворения требования ТЗ:
 //
@@ -13,7 +11,6 @@ import (
 func main() {
 	solver := app.DefaultSolverConfig()
 
-	// TODO: Don't forget to configure solver!
 	solver.Algorithm = "pareto1"
 
 	app.Main(app.Config{

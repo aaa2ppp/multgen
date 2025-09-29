@@ -1,14 +1,12 @@
-// == internal/api/fast/fastapi_test.go ==
-
 package fastapi_test
 
 import (
 	"net/http"
 	"testing"
 
+	"github.com/aaa2ppp/be"
 	"github.com/valyala/fasthttp"
 
-	"github.com/aaa2ppp/be"
 	fastapi "github.com/aaa2ppp/multgen/internal/api/fast"
 	"github.com/aaa2ppp/multgen/internal/solver"
 	"github.com/aaa2ppp/multgen/internal/testutils"

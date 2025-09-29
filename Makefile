@@ -1,11 +1,9 @@
-# == Makefile ==
-
 BIN_DIR := bin
 TMP_DIR := ./tmp
 GOEXE := $(shell go env GOEXE)
 TEST_FLAGS ?=
 
-MERGE_FILES ?= Makefile go.mod go.sum *.go *.sh *.md
+MERGE_FILES ?= Makefile go.mod go.sum *.go *.sh README.md
 
 # source and destination for merge/patch operations
 SRC ?= .
@@ -60,7 +58,7 @@ MERGE_FIND_EXPR := $(wordlist 2,$(words $(MERGE_FIND_PARTS)),$(MERGE_FIND_PARTS)
 
 merge:
 	@mkdir -p $(TMP_DIR)
-	find $(SRC) -type f \( $(MERGE_FIND_EXPR) \) -exec cat {} + > $(TMP_DIR)/$(DST).code
+	@find $(SRC) -type f \( $(MERGE_FIND_EXPR) \) -exec sh -c 'name="{}"; printf "== $${name#./} ==\n\n"; cat $$name; echo' ';' > $(TMP_DIR)/$(DST).code
 	@echo "Merge saved to $(TMP_DIR)/$(DST).code"	
 	
 

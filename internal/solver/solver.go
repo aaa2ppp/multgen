@@ -21,12 +21,10 @@ const (
 )
 
 type Config struct {
-	RTP            float64 // required
-	InputRTP       float64 //
-	IgnoreInputRTP bool    // for test only
-	Algorithm      string  //
-	Alpha          float64 //
-	AddDelta       bool    // добавить дельту к заначению мультипликатора
+	RTP       float64 // целевой RTP
+	Algorithm string  // алгоритма генерации RTP
+	Alpha     float64 // параметр алгоритма paretoAlpha
+	AddDelta  bool    // добавить дельту к заначению мультипликатора (имеет смысл для алгоритма min)
 }
 
 func (c Config) Validate() error {
@@ -99,10 +97,6 @@ type Solver struct {
 }
 
 func New(cfg Config) (*Solver, error) {
-	if !cfg.IgnoreInputRTP {
-		cfg.RTP = cfg.InputRTP
-	}
-
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}

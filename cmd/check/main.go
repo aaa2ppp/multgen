@@ -24,7 +24,6 @@ var (
 	multiply   = flag.Bool("m", false, "if this flag is set, then transform = x * m, otherwise x")
 	playersNum = flag.Int("n", 1, "number of playes")
 	verbose    = flag.Bool("v", false, "output human-readable results in stderr")
-	// confidence = flag.Float64("c", 0.95, "confidence level (makes sense only when n > 1)")
 )
 
 func validateFlags() error {
@@ -41,10 +40,6 @@ func validateFlags() error {
 	if !(*playersNum >= 1) {
 		errs = append(errs, errors.New("number of playesr must be >= 1"))
 	}
-
-	// if *playersNum > 1 && !(0 < *confidence && *confidence < 1) {
-	// 	errs = append(errs, errors.New("confidence level must be in (0, 1)"))
-	// }
 
 	return errors.Join(errs...)
 }
@@ -166,23 +161,35 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		fmt.Printf("%g %g %g %g\n", rtp, rtpLo, rtpHi, cl)
 
 		if *verbose {
-			p := 0.0001
-			d := max((rtpHi-rtpLo)/2, p)
-			n := 4
-			for p*10 <= d {
-				p *= 10
-				n--
-			}
-			if n < 0 {
-				n = 0
-			}
-			format := fmt.Sprintf("%%0.%df ±%%0.%df %%g%%%%", n, n)
-			log.Printf(format, math.Round(rtp/p)*p, math.Round(d/p)*p, cl*100)
+			log.Printf("%s %g%%\n", formatRangePretty(rtpLo, rtpHi), cl*100)
 		}
 	}
+}
+
+func formatRangePretty(lo, hi float64) string {
+	if lo > hi {
+		lo, hi = hi, lo
+	}
+
+	mean := (lo + hi) / 2
+
+	p := 0.0001
+	d := max((hi-lo)/2, p)
+	n := 4
+	for p*10 <= d {
+		p *= 10
+		n--
+	}
+	if n < 0 {
+		n = 0
+	}
+
+	format := fmt.Sprintf("%%0.%df ±%%0.%df", n, n)
+	return fmt.Sprintf(format, math.Round(mean/p)*p, math.Round(d/p)*p)
 }
 
 func unsafeString(b []byte) string {

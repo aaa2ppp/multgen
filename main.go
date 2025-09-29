@@ -1,10 +1,9 @@
 // == main.go ==
 
-// This file need only to satisfy the TS:
+// Этот файл необходим только для запуска приложения на тестовой платформе и
+// удовлетворения требования ТЗ:
 //
-// "Сервис должен запускаться командой: `go run . -rtp={значение}`"
-//
-// Main entry point - cmd/multgen/main.go
+//   - "Сервис должен запускаться командой: `go run . -rtp={значение}`"
 package main
 
 import (
@@ -19,7 +18,8 @@ func main() {
 
 	app.Main(app.Config{
 		Server: app.ServerConfig{
-			Addr:   "localhost:64333",
+			Addr:     "localhost:64333",
+			FastHTTP: true,
 		},
 		Solver: solver,
 	})

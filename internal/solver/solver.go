@@ -2,38 +2,12 @@
 package solver
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math"
 	"math/rand/v2"
 	"strings"
 )
-
-const (
-	MaxValue = 10000.0
-)
-
-type Config struct {
-	RTP       float64 // целевой RTP
-	Algorithm string  // алгоритма генерации RTP
-	Alpha     float64 // параметр алгоритма paretoAlpha
-	AddDelta  bool    // добавить дельту к заначению мультипликатора (имеет смысл для алгоритма min)
-}
-
-func (c Config) Validate() error {
-	var errs []error
-
-	if !(0 < c.RTP && c.RTP <= 1.0) {
-		errs = append(errs, fmt.Errorf("rtp value is incorrect: must be in (0, 1], got %g", c.RTP))
-	}
-
-	if !(c.Alpha >= 1) {
-		errs = append(errs, fmt.Errorf("alpha must be >= 1, got %g", c.Alpha))
-	}
-
-	return errors.Join(errs...)
-}
 
 type algoFunc func(*Config) float64
 
@@ -43,20 +17,20 @@ type Algorithm struct {
 	fn          algoFunc
 }
 
-func pareto1() float64 {
+func pareto1(maxValue float64) float64 {
 	u := rand.Float64()
 	m := 1 / (1 - u)
-	if m > MaxValue {
-		m = MaxValue
+	if m > maxValue {
+		m = maxValue
 	}
 	return m
 }
 
-func paretoAlpha(alpha float64) float64 {
+func paretoAlpha(alpha float64, maxValue float64) float64 {
 	u := rand.Float64()
 	m := math.Pow(1-u, -1/alpha)
-	if m > MaxValue {
-		m = MaxValue
+	if m > maxValue {
+		m = maxValue
 	}
 	return m
 }
@@ -66,12 +40,17 @@ var Algorithms = []Algorithm{
 	{
 		"pareto1",
 		`"честный" (при любых x, матожидание RTP=1), но плохо сходится при больших x`,
-		func(_ *Config) float64 { return pareto1() },
+		func(cfg *Config) float64 { return pareto1(cfg.MaxValue) },
 	},
 	{
 		"paretoA",
 		`"загоняем" игрока в x=1 (RTP падает с ростом x, при alpha > 1)`,
-		func(cfg *Config) float64 { return paretoAlpha(cfg.Alpha) },
+		func(cfg *Config) float64 { return paretoAlpha(cfg.Alpha, cfg.MaxValue) },
+	},
+	{
+		"const",
+		"всегда возвращает константу",
+		func(cfg *Config) float64 { return cfg.Value },
 	},
 	{
 		"max",
@@ -83,6 +62,10 @@ var Algorithms = []Algorithm{
 		"всегда возвращает 1",
 		func(_ *Config) float64 { return 1 },
 	},
+}
+
+func defaultAlgorithm() Algorithm {
+	return Algorithms[len(Algorithms)-1] // min
 }
 
 type Solver struct {

@@ -62,6 +62,8 @@ func MustLoad(tune Config) Config {
 		rtp       = flag.Float64("rtp", 0, "rtp must be in (0, 1] (required)")
 		algorithm = flag.String("algo", tune.Solver.Algorithm, algorithmsHelp("algorithm for generating multipliers", solver.Algorithms))
 		alpha     = flag.Float64("alpha", tune.Solver.Alpha, "alpha must be >= 1")
+		value     = flag.Float64("val", tune.Solver.Value, fmt.Sprintf("value must be in [1, %g]", solver.MaxValue))
+		maxValue  = flag.Float64("max-val", tune.Solver.MaxValue, fmt.Sprintf("max value must be in [1, %g]", solver.MaxValue))
 		addDelta  = flag.Bool("d", tune.Solver.AddDelta, "add delta to mulipliers")
 	)
 
@@ -73,7 +75,7 @@ func MustLoad(tune Config) Config {
 		os.Exit(0)
 	}
 
-	if *rtp == 0 {
+	if !tune.IgnoreInputRTP && *rtp == 0 {
 		fmt.Fprintln(os.Stderr, "rtp is required")
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -91,6 +93,18 @@ func MustLoad(tune Config) Config {
 		os.Exit(1)
 	}
 
+	if !(1 <= *maxValue && *maxValue <= solver.MaxValue) {
+		fmt.Fprintf(os.Stderr, "max value must be in [1, %g], got %g", solver.MaxValue, *maxValue)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if !(1 <= *value && *value <= solver.MaxValue) {
+		fmt.Fprintf(os.Stderr, "value must be in [1, %g], got %g", solver.MaxValue, *value)
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	tune.CLIMode = *cliMode
 
 	tune.Server.Addr = *serverAddr
@@ -101,6 +115,8 @@ func MustLoad(tune Config) Config {
 	}
 	tune.Solver.Algorithm = *algorithm
 	tune.Solver.Alpha = *alpha
+	tune.Solver.MaxValue = *maxValue
+	tune.Solver.Value = *value
 	tune.Solver.AddDelta = *addDelta
 
 	return tune

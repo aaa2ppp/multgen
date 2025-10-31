@@ -22,8 +22,9 @@ type Config struct {
 }
 
 type Server struct {
-	Addr     string
-	FastHTTP bool
+	Addr      string
+	FastHTTP  bool
+	DummyHTTP bool
 }
 
 type Solver = solver.Config
@@ -56,7 +57,8 @@ func MustLoad(tune Config) Config {
 
 		// Server flags
 		serverAddr = flag.String("http", tune.Server.Addr, "http server address")
-		fastHTTP   = flag.Bool("fast", tune.Server.FastHTTP, "use fasthttp instead of net/http")
+		fastHTTP   = flag.Bool("fast", tune.Server.FastHTTP, "use fasthttp server instead of net/http")
+		dummyHTTP  = flag.Bool("dummy", tune.Server.DummyHTTP, "use dummy server instead of net/http")
 
 		// Solver flags
 		rtp       = flag.Float64("rtp", 0, "rtp must be in (0, 1] (required)")
@@ -73,6 +75,22 @@ func MustLoad(tune Config) Config {
 		fmt.Fprint(os.Stderr, "Usage: multgen [options] -rtp=<value>\nOptions:\n")
 		flag.PrintDefaults()
 		os.Exit(0)
+	}
+
+	modes := 0
+	if *cliMode {
+		modes++
+	}
+	if *fastHTTP {
+		modes++
+	}
+	if *dummyHTTP {
+		modes++
+	}
+	if modes > 1 {
+		fmt.Fprintf(os.Stderr, "flags: -cli, -fast, and -dummy are mutually exclusive, got: %v, %v, %v", *cliMode, *fastHTTP, *dummyHTTP)
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	if !tune.IgnoreInputRTP && *rtp == 0 {
@@ -109,6 +127,7 @@ func MustLoad(tune Config) Config {
 
 	tune.Server.Addr = *serverAddr
 	tune.Server.FastHTTP = *fastHTTP
+	tune.Server.DummyHTTP = *dummyHTTP
 
 	if !tune.IgnoreInputRTP {
 		tune.Solver.RTP = *rtp

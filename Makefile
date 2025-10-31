@@ -2,8 +2,9 @@ BIN_DIR := bin
 TMP_DIR := ./tmp
 GOEXE := $(shell go env GOEXE)
 TEST_FLAGS ?=
+TEST_FLAGS := $(TEST_FLAGS) -tags=dev
 
-MERGE_FILES ?= Makefile go.mod go.sum *.go *.sh README.md
+MERGE_FILES ?= Makefile go.mod go.sum *.go *.sh *.md
 
 # source and destination for merge/patch operations
 SRC ?= .
@@ -46,7 +47,7 @@ clean:
 .PHONY: bench-http test
 
 bench-http:
-	go test -bench . -benchmem ./internal/api/... ./internal/cmd/multgen/. 
+	go test -bench . -benchmem ./internal/api/... ./internal/server/... 
 
 test:
 	go test $(TEST_FLAGS) ./...

@@ -9,8 +9,7 @@ import (
 // tune application
 var tune = config.Config{
 	Server: config.Server{
-		Addr:     "localhost:64333",
-		FastHTTP: true,
+		Addr: "localhost:64333",
 	},
 	Solver: solver.DefaultConfig(),
 }

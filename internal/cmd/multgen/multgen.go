@@ -2,7 +2,6 @@ package multgen
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -11,15 +10,16 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/valyala/fasthttp"
 
 	fastapi "github.com/aaa2ppp/multgen/internal/api/fast"
-	api "github.com/aaa2ppp/multgen/internal/api/std"
+	stdapi "github.com/aaa2ppp/multgen/internal/api/std"
 	"github.com/aaa2ppp/multgen/internal/config"
+	"github.com/aaa2ppp/multgen/internal/server"
+	"github.com/aaa2ppp/multgen/internal/server/dummy"
 	"github.com/aaa2ppp/multgen/internal/solver"
 )
 
@@ -36,106 +36,61 @@ func Main(tune config.Config) {
 	if cfg.CLIMode {
 		exitCode = runAsCLI(os.Stdin, os.Stdout, solver)
 	} else {
-		if cfg.Server.FastHTTP {
-			exitCode = runAsFastHTTPServer(cfg.Server, solver)
-		} else {
-			exitCode = runAsHTTPServer(cfg.Server, solver)
-		}
+		exitCode = runAsHTTPServer(cfg.Server, solver)
 		log.Printf("exit with code: %d", exitCode)
 	}
 
 	os.Exit(exitCode)
 }
 
-func runAsFastHTTPServer(cfg config.Server, s *solver.Solver) int {
-	api := fastapi.New(s)
+func runAsHTTPServer(cfg config.Server, solver *solver.Solver) int {
+	const (
+		readTimeout   = 5 * time.Second
+		writeTimeout  = 5 * time.Second
+		workerTimeout = 100 * time.Microsecond
+	)
+
+	var srv server.Server
+	if cfg.DummyHTTP {
+		srv = &dummy.Server{
+			Solver:        solver,
+			ReadTimeout:   readTimeout,
+			WriteTimeout:  writeTimeout,
+			WorkerTimeout: workerTimeout,
+		}
+	} else if cfg.FastHTTP {
+		srv = &fasthttp.Server{
+			Handler:      fastapi.New(solver),
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+		}
+	} else {
+		srv = &http.Server{
+			Handler:      stdapi.New(solver),
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+		}
+	}
 
 	listener, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
-		log.Printf("failed to listen on %s: %v", cfg.Addr, err)
+		log.Printf("can't start server: %v", err)
 		return 1
 	}
 
-	var wg sync.WaitGroup
-	wrappedHandler := func(ctx *fasthttp.RequestCtx) {
-		wg.Add(1)
-		defer wg.Done()
-		api(ctx)
-	}
+	_, stopServer := server.Start(srv, listener)
 
-	done := make(chan int, 1)
-	go func() {
-		defer close(done)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	sig := <-c
+	log.Printf("shutdown by signal: %v", sig)
 
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		sig := <-c
-		log.Printf("shutdown by signal: %v", sig)
-
-		if err := listener.Close(); err != nil {
-			log.Printf("can't close listener: %v", err)
-			done <- 1
-		}
-
-		finished := make(chan struct{})
-		go func() {
-			wg.Wait()
-			close(finished)
-		}()
-
-		tm := time.NewTimer(10 * time.Second)
-		select {
-		case <-finished:
-		case <-tm.C:
-			log.Println("graceful shutdown timeout")
-			done <- 1
-		}
-	}()
-
-	log.Printf("fasthttp server listens on %v", cfg.Addr)
-	if err := fasthttp.Serve(listener, wrappedHandler); err != nil && err != net.ErrClosed {
-		log.Printf("fasthttp server fail: %v", err)
+	if err := stopServer(); err != nil {
+		log.Printf("stop server failed: %v", err)
 		return 1
 	}
 
-	return <-done
-}
-
-func runAsHTTPServer(cfg config.Server, s *solver.Solver) int {
-	api := api.New(s)
-
-	server := &http.Server{
-		Addr:         cfg.Addr,
-		Handler:      api,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	done := make(chan int)
-	go func() {
-		defer close(done)
-
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		s := <-c
-
-		log.Printf("shutdown by signal: %v", s)
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("graceful shutdown failed: %v", err)
-			done <- 1
-		}
-	}()
-
-	log.Printf("http server listens on %v", server.Addr)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Printf("http server fail: %v", err)
-		return 1
-	}
-
-	return <-done
+	return 0
 }
 
 func runAsCLI(in io.Reader, out io.Writer, s *solver.Solver) int {
